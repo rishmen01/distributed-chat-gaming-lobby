@@ -1,28 +1,30 @@
 # Distributed Gaming Lobby (WCF / WPF)
 
-A collaborative project that implements a Mortal Kombat X-themed gaming lobby using C#, .NET Framework 4.8, WCF (`netTcpBinding`) and WPF.
+A collaborative multiplayer gaming lobby application inspired by Mortal Kombat X, developed using C#, .NET Framework 4.8, Windows Communication Foundation (WCF), and Windows Presentation Foundation (WPF).
+
+The application demonstrates distributed client-server communication through two approaches: WCF Duplex communication and background polling.
 
 ## Team
 
-This was developed as a three-person group project. 
+This project was developed collaboratively by:
 
 | Contributor | Email |
 |---|---|
-| Senal Senanayake | senanayakesenal@gmail.com |
-| Vishma Bandara | vishma.bandara@gmail.com |
-| Rishon Mendis | rishonmendis@gmail.com |
+| Senal Senanayake | [senanayakesenal@gmail.com] |
+| Vishma Bandara | [vishma.bandara@gmail.com] |
+| Rishon Mendis | [rishonmendis@gmail.com] |
 
-## Solution structure
+## Solution Structure
 
 ```text
 DistributedChat/
-├── DatabaseLibrary/          # In-memory data store and serialisable models
-├── DataTierServer/           # WCF data-tier contract and implementation
-├── SharedContracts/          # Lobby service, callback and file-notice contracts
-├── Server/                   # Hosts data tier and lobby service endpoints
-├── GamingLobbyDuplexClient/        # Duplex WPF client (server push callbacks)
-├── GamingLobbyPollingClient/ # WPF client using background polling
-├── docs/                     # Manual test plan and design notes
+├── DatabaseLibrary/              # In-memory data store and serialisable models
+├── DataTierServer/               # WCF data-tier contract and implementation
+├── SharedContracts/              # Lobby service, callback and file-notice contracts
+├── Server/                       # Hosts data tier and lobby service endpoints
+├── GamingLobbyDuplexClient/       # Duplex WPF client (server push callbacks)
+├── GamingLobbyPollingClient/      # WPF client using background polling
+├── docs/                          # Manual test plan and design notes
 └── DistributedChat.sln
 ```
 
@@ -36,71 +38,112 @@ The `Server` console application hosts the data-tier endpoint and two lobby endp
 - Duplex lobby service: `net.tcp://localhost:8001/LobbyService/Duplex`
 - Polling lobby service: `net.tcp://localhost:8001/LobbyService/Polling`
 
-The data tier owns the registered-player, room, message and shared-file metadata collections. The lobby service validates the active WCF session, enforces room membership, routes messages and manages shared files. It exposes distinct service contracts for duplex and polling clients.
+The data tier manages the registered-player, room, message and shared-file metadata collections. The lobby service validates active WCF sessions, enforces room membership, routes messages and manages shared files. Separate service contracts are provided for the Duplex and Polling clients.
 
 ### Clients
 
-- `GamingLobbyDuplexClient` uses duplex WCF callbacks for near-real-time room, message, roster, private-message and file notices.
-- `GamingLobbyPollingClient` uses `PollingChannelFactory<InterfaceLobbyPolling>` and a background task to query room lists, room members, room messages, private-message history and shared-file metadata every five seconds. It does not use server push callbacks.
-- `PollingChannelFactory<T>` is a small project-defined subclass of WCF's standard non-duplex `ChannelFactory<T>`. WCF has no built-in `PollingChannelFactory`; the custom name makes the polling client's intent explicit while preserving the normal WCF channel-factory behaviour.
+- **Duplex Client:** Uses WCF duplex callbacks for near-real-time room, message, roster, private-message and file notifications.
+- **Polling Client:** Uses `PollingChannelFactory<InterfaceLobbyPolling>` and a background task to retrieve room lists, room members, room messages, private-message history and shared-file metadata every five seconds.
 
-The clients have separate WPF implementations and separate WCF service contracts: `InterfaceLobbyDuplex` with `InterfaceLobbyDuplexCallback` for the duplex client, and `InterfaceLobbyPolling` for the polling client.
+The polling client does not use server-push callbacks.
+
+`PollingChannelFactory<T>` is a project-defined subclass of WCF's standard non-duplex `ChannelFactory<T>`. WCF does not provide a built-in `PollingChannelFactory`; the custom name makes the polling client's communication approach explicit while retaining standard WCF channel-factory behaviour.
+
+The clients have separate WPF implementations and separate WCF service contracts:
+
+- `InterfaceLobbyDuplex` with `InterfaceLobbyDuplexCallback` for the Duplex client.
+- `InterfaceLobbyPolling` for the Polling client.
 
 ## Features
 
 - Username registration and one active session per username.
-- Room creation, joining and leaving. A player may belong to only one room at a time.
-- Public room messaging and private messaging between players in the same room.
+- Room creation, joining and leaving.
+- One-room-per-player membership enforcement.
+- Public room messaging.
+- Private messaging between players in the same room.
 - Image and text file sharing with room-membership checks on download.
-- Separate duplex and polling clients.
-- Login-aware UI: login is available before authentication; room operations are disabled until login succeeds; logout and room-only operations are enabled only when appropriate.
-- The signed-in player is excluded from the room's private-chat recipient list; messages sent by the local player are labelled `You` in the private conversation.
-- Shared file names are interactive download links in the room chat. The client opens a Save File dialog and downloads by file ID after the server verifies room membership.
+- Separate Duplex and Polling clients.
+- Login-aware interface with controls enabled according to authentication and room membership.
+- Private-chat recipient selection excludes the signed-in player.
+- Messages sent by the local player are labelled `You` in private conversations.
+- Interactive file-download links in the room chat.
 - WCF session-based caller identification and server-side validation.
+
+## Technologies
+
+- C#
+- .NET Framework 4.8
+- Windows Communication Foundation (WCF)
+- Windows Presentation Foundation (WPF)
+- `netTcpBinding`
+- Visual Studio 2022
 
 ## Requirements
 
-- Windows 10/11
-- Visual Studio 2022 (or compatible Visual Studio with .NET Framework project support)
+- Windows 10 or Windows 11
+- Visual Studio 2022 or a compatible version with .NET Framework project support
 - .NET Framework 4.8 Developer Pack / targeting pack
 - WPF and WCF development components
 
-## Run locally
+## Getting Started
 
 1. Open `DistributedChat.sln` in Visual Studio.
-2. Rebuild the solution. Restore any missing .NET Framework reference assemblies if prompted.
-3. Set `Server` as the startup project and run it. It starts the data-tier and lobby WCF hosts. Keep the console open.
-4. Start one or more instances of `GamingLobbyDuplexClient` for callback/duplex operation, or `GamingLobbyPollingClient` for background polling. The polling client captures room/message/private-message baselines when a room is opened so newly arriving content is not mistaken for old history on its first poll.
-5. Register a username (3–24 letters, numbers, `_` or `-`), log in, create or join a room, and test the features.
-6. Use different usernames for simultaneous client instances. A username may only have one active session at a time.
+2. Restore any missing dependencies or .NET Framework reference assemblies.
+3. Rebuild the solution.
+4. Set `Server` as the startup project and run it. It starts the data-tier and lobby WCF hosts. Keep the console window open.
+5. Start one or more instances of `GamingLobbyDuplexClient` for callback-based communication, or `GamingLobbyPollingClient` for background polling.
+6. Register a username and log in.
+7. Create or join a room and start using the lobby features.
 
-The endpoints are configured for `localhost`, matching the assignment's single-machine demonstration setup.
+Use different usernames for simultaneous client instances. A username can only have one active session at a time.
 
-## File-sharing rules
+The endpoints are configured for `localhost`, so the server and clients are expected to run on the same machine.
 
-- Allowed: `.txt`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.bmp`.
-- Maximum size: 5 MB per file.
+## File Sharing
+
+Supported file types:
+
+- `.txt`
+- `.png`
+- `.jpg`
+- `.jpeg`
+- `.gif`
+- `.bmp`
+
+Additional rules:
+
+- Maximum file size: 5 MB per file.
 - Downloads are available only to users currently in the room where the file was shared.
-- Shared file names are clickable hyperlinks inside the read-only WPF chat `RichTextBox`; `IsDocumentEnabled` is enabled on that control so its `Hyperlink.Click` handlers can run.
-- Uploaded content is written under `Server/SharedFiles/`; this runtime folder is excluded from Git.
+- Shared file names appear as clickable hyperlinks in the read-only WPF chat `RichTextBox`.
+- The client displays a Save File dialog and downloads the file using its file ID after the server verifies room membership.
+- Uploaded content is stored under `Server/SharedFiles/`. This runtime directory is excluded from Git.
 
 ## Testing
 
-Run the `DatabaseLibrary.SmokeTests` project for automated data-layer checks, then follow [`docs/manual-test-plan.md`](docs/manual-test-plan.md) to build and validate the solution with one to five simultaneous clients, including negative tests for invalid membership and file access. The code was statically reviewed and updated in this preparation environment, but this environment does not include the Windows .NET Framework/WPF toolchain. A successful Visual Studio rebuild and runtime test is still required before claiming the application has been fully tested.
+The `DatabaseLibrary.SmokeTests` project provides automated data-layer checks.
 
-## Important limitations and security note
+Additional scenarios can be tested using [`docs/manual-test-plan.md`](docs/manual-test-plan.md), including:
 
-This is an educational local-network demonstration, not a production-ready messaging service. WCF transport security is configured as `SecurityMode.None` and the endpoints bind to `localhost`; do not expose them to an untrusted network. Player registrations, rooms, message history and file metadata are stored in an in-memory singleton and are lost when the server process exits. Shared-file bytes remain under the server's `SharedFiles` directory.
+- Multiple simultaneous clients.
+- Room creation, joining and leaving.
+- Public and private messaging.
+- Duplex callbacks and polling synchronisation.
+- File uploads and downloads.
+- Invalid room-membership and file-access attempts.
 
-## Academic and third-party attribution
+The source code has undergone static review. A successful full Visual Studio rebuild and runtime verification should be completed before treating the application as fully tested.
 
-Retain the original group attribution and cite any external snippets, tutorials or assets used. Obtain agreement from all group members and check the course publication rules before making the repository public.
+## Limitations and Security
 
+This project is designed as a local-network demonstration rather than a production-ready messaging service.
 
-## Polling behaviour and refresh controls
+- WCF transport security is configured as `SecurityMode.None`.
+- The endpoints bind to `localhost` and should not be exposed to untrusted networks.
+- Player registrations, rooms, message history and file metadata are stored in an in-memory singleton and are lost when the server process exits.
+- Shared-file contents remain in the server's `SharedFiles` directory.
 
-The polling client performs automatic background synchronisation on a five-second cadence. This includes lobby-room discovery, room roster updates, room messages, shared-file notices, and private-message history for participants in the active room. The main **Refresh Now** control requests an immediate synchronisation without disabling or replacing the automatic polling schedule. Each polling private-chat window also has a **Refresh** control for an immediate history reload.
+## Credits
 
-The duplex client does not poll; it receives updates through WCF duplex callbacks. Its private-chat updates are delivered through the callback contract.
+Developed collaboratively by Senal Senanayake, Vishma Bandara and Rishon Mendis.
 
-The message composer uses a responsive grid: the input field takes the available width and the Send and Share File buttons retain their required widths. The login and room-action rows and both private-chat composers use the same responsive layout approach.
+External code snippets, tutorials and third-party assets should be appropriately acknowledged.
