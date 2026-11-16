@@ -1,0 +1,77 @@
+<Window x:Class="GamingLobbyPollingClient.PrivateChatWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Private Chat"
+        Height="360" Width="540" MinHeight="280" MinWidth="400" ResizeMode="CanResize"
+        WindowStartupLocation="CenterScreen"
+        Background="#E9EBEE">
+
+    <Window.Resources>
+        <!-- Button Style (Blue) -->
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#2196F3"/>
+            <!-- blue -->
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="6,3"/>
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#1976D2"/>
+                                <!-- darker blue hover -->
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#0D47A1"/>
+                                <!-- pressed -->
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Darker Panel Background -->
+        <SolidColorBrush x:Key="PanelBackground" Color="#D0D3D8"/>
+    </Window.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Chat display -->
+        <TextBox x:Name="PrivateChatBox"
+                 Grid.Row="0"
+                 IsReadOnly="True"
+                 TextWrapping="Wrap"
+                 Background="{StaticResource PanelBackground}"
+                 BorderBrush="#B0B3B8"
+                 VerticalScrollBarVisibility="Auto"
+                 Margin="0,0,0,10"/>
+
+        <!-- Responsive message input, manual history refresh and send -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="PrivateMessageTextBox" Grid.Column="0"
+                     MinWidth="80" Margin="0,0,8,0" Padding="5"/>
+            <Button x:Name="RefreshPrivateButton" Grid.Column="1" Content="Refresh"
+                    MinWidth="78" Margin="0,0,6,0" Click="RefreshPrivateButton_Click"/>
+            <Button Grid.Column="2" Content="Send" MinWidth="76"
+                    Click="SendPrivateButton_Click"/>
+        </Grid>
+    </Grid>
+</Window>
